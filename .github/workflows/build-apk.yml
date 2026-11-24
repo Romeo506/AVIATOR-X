@@ -40,7 +40,7 @@ jobs:
           sdkmanager --list_installed
 
       - name: Build debug APK
-        run: gradle --no-daemon --stacktrace :app:assembleDebug
+        run: gradle --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleDebug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
