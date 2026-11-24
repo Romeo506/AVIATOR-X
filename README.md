@@ -1,22 +1,29 @@
 # AVIATOR X
 
-Android research app for historical crash-game data analysis and SHA-256 commitment checking.
+Android research app for local crash-game round recording, historical data analysis and SHA-256 commitment verification.
 
-## Current features
-- Import CSV history from Android document picker.
-- Parse multiplier / crash / result / coefficient columns, or plain numeric CSV values.
-- Historical average, median and observed frequency summaries.
-- Local SHA-256 calculator and commitment comparison.
-- No gambling account login, passwords, OTPs, cookies or session tokens are collected.
+## Working features
+- Import CSV history from the Android document picker.
+- Parse `multiplier`, `crash`, `result`, or `coefficient` columns, or plain numeric CSV data.
+- Save imported rounds and manually entered multipliers locally on the device.
+- Historical average, median, below-2x frequency, distribution bands and latest low-round streak.
+- View the latest saved outcomes.
+- Export locally saved rounds as CSV.
+- Clear local history.
+- Calculate SHA-256 locally and compare a revealed seed with a published commitment hash.
+- No account login, passwords, OTPs, cookies, session tokens, or cloud data collection.
 
-## Important limitations
-A SHA-256 commitment is a one-way hash, not an encrypted server seed. It can be checked after a seed is revealed, but it does not disclose a hidden future seed. Historical crash multipliers do not establish a reliable next-round prediction. The app deliberately does not fabricate predictions or confidence percentages.
+## Build
+GitHub Actions builds a debug APK on every push to `main` and on manual workflow dispatch. The workflow installs Java 17, Android SDK platform 35 / build tools 35.0.0, and Gradle 8.9. It prints diagnostic versions and runs:
 
-## Build APK
-GitHub Actions builds a debug APK on every push to main and on manual workflow dispatch. Open the Actions tab and download the `AVIATOR-X-debug-APK` artifact from a successful run.
+```bash
+gradle --no-daemon --stacktrace :app:assembleDebug
+```
+
+After a successful run, download the `AVIATOR-X-debug-APK` artifact from the Actions run.
 
 ## CSV format
-Either a header row with a column named `multiplier`, `crash`, `result`, or `coefficient`, or a simple list of multiplier values such as:
+A CSV with a header:
 
 ```csv
 multiplier
@@ -26,4 +33,9 @@ multiplier
 5.60
 ```
 
-All analysis is descriptive, not a betting signal.
+Or plain numeric values separated by commas, semicolons, or new lines.
+
+## Important limitations
+A SHA-256 commitment is a one-way hash, not encrypted server-seed data. It can be checked after a seed is revealed; it cannot disclose a hidden future seed. Historical crash multipliers do not establish a reliable next-round prediction. The app intentionally does not generate fake signals, guaranteed win claims, or fabricated confidence percentages.
+
+All analytics are descriptive statistics of the data entered by the user, not betting advice. Use the app to understand records and fairness proofs, not to decide wagers.
