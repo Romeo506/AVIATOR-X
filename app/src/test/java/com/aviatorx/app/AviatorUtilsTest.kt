@@ -29,6 +29,12 @@ class AviatorUtilsTest {
     }
 
     @Test
+    fun providerProfilesUseDifferentStorageKeys() {
+        assertTrue(providerStorageKey("Spribe Aviator") != providerStorageKey("SmartSoft JetX"))
+        assertTrue(providerStorageKey("SmartSoft JetX") != providerStorageKey("Generic Crash Game"))
+    }
+
+    @Test
     fun sha256MatchesKnownDigest() {
         assertEquals(
             "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
