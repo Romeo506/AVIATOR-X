@@ -138,7 +138,7 @@ fun AviatorApp() {
             when (tab) {
                 0 -> {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                        item { StatCard("LOCAL ROUND RECORDS", savedRounds.size.toString(), "Saved privately on this phone. No account login or cloud upload.") }
+                        item { StatCard("$selectedProvider • LOCAL ROUND RECORDS", savedRounds.size.toString(), "Saved privately on this phone. No account login or cloud upload.") }
                         item { StatCard("RESEARCH MODE", "ACTIVE", "This app describes recorded data. It does not predict the next crash point.") }
                         item { StatCard("LOW MULTIPLIER SHARE", if (savedRounds.isEmpty()) "—" else "$lowPct%", "Observed share of saved rounds below 2.00x; not a future probability guarantee.") }
                         item {
@@ -214,7 +214,7 @@ fun AviatorApp() {
                         item { Text(notice, color = Accent, fontSize = 12.sp) }
                         item {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedButton(onClick = { exportPicker.launch("aviator-x-rounds.csv") }, enabled = savedRounds.isNotEmpty(), modifier = Modifier.weight(1f)) { Text("EXPORT CSV") }
+                                OutlinedButton(onClick = { exportPicker.launch("aviator-x-${providerStorageKey(selectedProvider)}.csv") }, enabled = savedRounds.isNotEmpty(), modifier = Modifier.weight(1f)) { Text("EXPORT CSV") }
                                 OutlinedButton(onClick = {
                                     savedRounds = emptyList()
                                     notice = "Local round history cleared."
