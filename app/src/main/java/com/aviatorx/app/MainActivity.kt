@@ -32,6 +32,9 @@ private val Muted = Color(0xFF9AA9BD)
 private val Good = Color(0xFF69D6A4)
 private val Bad = Color(0xFFFF7777)
 
+private val providers = listOf("Spribe Aviator", "SmartSoft JetX", "Generic Crash Game")
+fun providerStorageKey(provider: String): String = "rounds_" + provider.lowercase().replace(Regex("[^a-z0-9]+"), "_")
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,6 +47,8 @@ fun AviatorApp() {
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences("aviator_x_local", 0) }
     var tab by remember { mutableIntStateOf(0) }
+    var selectedProvider by remember { mutableStateOf(providers.first()) }
+    var providerMenuExpanded by remember { mutableStateOf(false) }
     var savedRounds by remember { mutableStateOf(loadRounds(prefs.getString("rounds", "") ?: "")) }
     var manualInput by remember { mutableStateOf("") }
     var hashInput by remember { mutableStateOf("") }
@@ -51,7 +56,7 @@ fun AviatorApp() {
     var notice by remember { mutableStateOf("Import a CSV or add a round manually.") }
 
     SideEffect {
-        prefs.edit().putString("rounds", savedRounds.joinToString(",")).apply()
+        prefs.edit().putString(providerStorageKey(selectedProvider), savedRounds.joinToString(",")).apply()
     }
 
     val importPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
@@ -102,9 +107,28 @@ fun AviatorApp() {
                     Text("AVIATOR X", color = Accent, fontSize = 26.sp, fontWeight = FontWeight.Black)
                     Text("ROUND DATA • FAIRNESS • RESEARCH", color = Muted, fontSize = 9.sp, letterSpacing = 1.5.sp)
                 }
-                Text("v0.2.0", color = Muted, fontSize = 12.sp)
+                Box {
+                    OutlinedButton(onClick = { providerMenuExpanded = true }) {
+                        Text("GAME: " + selectedProvider, fontSize = 10.sp, color = Accent)
+                    }
+                    DropdownMenu(expanded = providerMenuExpanded, onDismissRequest = { providerMenuExpanded = false }) {
+                        providers.forEach { provider ->
+                            DropdownMenuItem(
+                                text = { Text(provider) },
+                                onClick = {
+                                    selectedProvider = provider
+                                    savedRounds = loadRounds(prefs.getString(providerStorageKey(provider), if (provider == providers.first()) prefs.getString("rounds", "") ?: "" else "") ?: "")
+                                    providerMenuExpanded = false
+                                    notice = "Switched to $provider. Its round history is stored separately."
+                                }
+                            )
+                        }
+                    }
+                }
             }
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(8.dp))
+            Text("MULTI-PROVIDER LOCAL DATA PROFILES", color = Muted, fontSize = 9.sp)
+            Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 listOf("Home", "Analyzer", "History", "SHA-256").forEachIndexed { i, label ->
                     FilterChip(selected = tab == i, onClick = { tab = i }, label = { Text(label, fontSize = 11.sp) })
@@ -124,7 +148,7 @@ fun AviatorApp() {
                                     Spacer(Modifier.height(10.dp))
                                     Button(onClick = { tab = 1 }, modifier = Modifier.fillMaxWidth()) { Text("OPEN ANALYZER") }
                                     OutlinedButton(onClick = { importPicker.launch(arrayOf("text/*", "application/vnd.ms-excel")) }, modifier = Modifier.fillMaxWidth()) { Text("IMPORT ROUND CSV") }
-                                    OutlinedButton(onClick = { exportPicker.launch("aviator-x-rounds.csv") }, enabled = savedRounds.isNotEmpty(), modifier = Modifier.fillMaxWidth()) { Text("EXPORT MY DATA") }
+                                    OutlinedButton(onClick = { exportPicker.launch("aviator-x-${providerStorageKey(selectedProvider)}.csv") }, enabled = savedRounds.isNotEmpty(), modifier = Modifier.fillMaxWidth()) { Text("EXPORT MY DATA") }
                                 }
                             }
                         }
@@ -134,8 +158,8 @@ fun AviatorApp() {
                 }
                 1 -> {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                        item { Text("HISTORICAL ANALYZER", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 17.sp) }
-                        item { Text("All calculations use only the rounds stored on this device.", color = Muted, fontSize = 12.sp) }
+                        item { Text("$selectedProvider • HISTORICAL ANALYZER", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 17.sp) }
+                        item { Text("Provider profile: $selectedProvider. Histories are separated by provider and stored only on this device.", color = Muted, fontSize = 12.sp) }
                         item { StatCard("ROUNDS ANALYZED", savedRounds.size.toString(), "Maximum retained locally: 10,000 rounds.") }
                         item { StatCard("AVERAGE", average?.let { "%.3fx".format(it) } ?: "—", "Arithmetic mean of recorded outcomes.") }
                         item { StatCard("MEDIAN", medianValue?.let { "%.3fx".format(it) } ?: "—", "Middle value after sorting recorded outcomes.") }
@@ -165,7 +189,7 @@ fun AviatorApp() {
                 }
                 2 -> {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                        item { Text("ROUND HISTORY", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 17.sp) }
+                        item { Text("$selectedProvider • ROUND HISTORY", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 17.sp) }
                         item {
                             OutlinedTextField(
                                 value = manualInput,
@@ -197,7 +221,7 @@ fun AviatorApp() {
                                 }, enabled = savedRounds.isNotEmpty(), modifier = Modifier.weight(1f)) { Text("CLEAR ALL") }
                             }
                         }
-                        item { Text("Newest first • ${savedRounds.size} saved", color = Muted, fontSize = 11.sp) }
+                        item { Text("$selectedProvider • Newest first • ${savedRounds.size} saved", color = Muted, fontSize = 11.sp) }
                         items(savedRounds.indices.reversed().take(200).toList()) { index ->
                             Row(Modifier.fillMaxWidth().background(Panel, RoundedCornerShape(10.dp)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Text("#${index + 1}", color = Muted, modifier = Modifier.weight(1f), fontSize = 11.sp)
@@ -231,7 +255,7 @@ fun AviatorApp() {
                 }
             }
             Spacer(Modifier.height(6.dp))
-            Text("Independent research tool • No betting advice • Data stays on device", color = Muted, fontSize = 9.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
+            Text("$selectedProvider • Independent research • Data stays on device", color = Muted, fontSize = 9.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
         }
     }
 }
